@@ -25,6 +25,7 @@ Beginner-friendly course teaching GitHub Copilot CLI. Educational content, not s
 - Tone: friendly, encouraging, practical
 - Use `samples/book-app-project/` paths in all primary examples
 - Use Python/pytest context for code examples
+- Use Japanese
 
 ## Don't
 
