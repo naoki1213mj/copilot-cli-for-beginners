@@ -70,3 +70,20 @@ class BookCollection:
     def find_by_author(self, author: str) -> List[Book]:
         """Find all books by a given author."""
         return [b for b in self.books if b.author.lower() == author.lower()]
+
+    def list_by_year(self, start: int, end: int) -> List[Book]:
+        """Filter books by publication year range (inclusive).
+
+        Args:
+            start: The starting year (inclusive).
+            end: The ending year (inclusive).
+
+        Returns:
+            A list of books published between start and end years.
+
+        Raises:
+            ValueError: If start is greater than end.
+        """
+        if start > end:
+            raise ValueError(f"Start year ({start}) cannot be greater than end year ({end})")
+        return [b for b in self.books if start <= b.year <= end]

@@ -8,19 +8,62 @@ def print_menu():
 
 
 def get_user_choice() -> str:
-    return input("Choose an option (1-5): ").strip()
+    while True:
+        choice = input("Choose an option (1-5): ").strip()
+        if not choice:
+            print("Input cannot be empty. Please enter a number between 1 and 5.")
+            continue
+        if not choice.isdigit() or not 1 <= int(choice) <= 5:
+            print(f"Invalid choice: '{choice}'. Please enter a number between 1 and 5.")
+            continue
+        return choice
 
 
-def get_book_details():
-    title = input("Enter book title: ").strip()
-    author = input("Enter author: ").strip()
+def get_book_details() -> tuple[str, str, int]:
+    """Interactively prompt the user for book details with input validation.
 
-    year_input = input("Enter publication year: ").strip()
-    try:
-        year = int(year_input)
-    except ValueError:
-        print("Invalid year. Defaulting to 0.")
-        year = 0
+    Asks for title, author, and publication year in sequence. Each field is
+    validated before proceeding: title and author must be non-empty strings,
+    and year must be a non-negative integer. The user is re-prompted until
+    valid input is provided for each field.
+
+    Returns:
+        tuple[str, str, int]: A tuple of (title, author, year) where:
+            - title: The book's title (non-empty string).
+            - author: The book's author (non-empty string).
+            - year: The publication year (non-negative integer).
+
+    Example:
+        >>> title, author, year = get_book_details()
+        Enter book title: The Hobbit
+        Enter author: J.R.R. Tolkien
+        Enter publication year: 1937
+    """
+    while True:
+        title = input("Enter book title: ").strip()
+        if title:
+            break
+        print("Title cannot be empty. Please enter a title.")
+
+    while True:
+        author = input("Enter author: ").strip()
+        if author:
+            break
+        print("Author cannot be empty. Please enter an author.")
+
+    while True:
+        year_input = input("Enter publication year: ").strip()
+        if not year_input:
+            print("Year cannot be empty. Please enter a year.")
+            continue
+        try:
+            year = int(year_input)
+            if year < 0:
+                print("Year cannot be negative. Please enter a valid year.")
+                continue
+            break
+        except ValueError:
+            print(f"Invalid year: '{year_input}'. Please enter a number.")
 
     return title, author, year
 

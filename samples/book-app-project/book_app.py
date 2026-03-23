@@ -59,16 +59,32 @@ def handle_find():
     show_books(books)
 
 
+def handle_search_year():
+    print("\nSearch Books by Year Range\n")
+
+    start_str = input("Start year: ").strip()
+    end_str = input("End year: ").strip()
+
+    try:
+        start = int(start_str)
+        end = int(end_str)
+        books = collection.list_by_year(start, end)
+        show_books(books)
+    except ValueError as e:
+        print(f"\nError: {e}\n")
+
+
 def show_help():
     print("""
 Book Collection Helper
 
 Commands:
-  list     - Show all books
-  add      - Add a new book
-  remove   - Remove a book by title
-  find     - Find books by author
-  help     - Show this help message
+  list         - Show all books
+  add          - Add a new book
+  remove       - Remove a book by title
+  find         - Find books by author
+  search-year  - Search books by year range
+  help         - Show this help message
 """)
 
 
@@ -87,6 +103,8 @@ def main():
         handle_remove()
     elif command == "find":
         handle_find()
+    elif command == "search-year":
+        handle_search_year()
     elif command == "help":
         show_help()
     else:
