@@ -60,8 +60,8 @@ def test_add_book_whitespace_author(collection):
 
 
 def test_add_book_negative_year(collection):
-    book = collection.add_book("Ancient Text", "Unknown", -500)
-    assert book.year == -500
+    with pytest.raises(BookValidationError):
+        collection.add_book("Ancient Text", "Unknown", -500)
 
 
 def test_add_book_duplicate_title(collection):
@@ -422,7 +422,7 @@ def test_remove_all_books_one_by_one(collection):
 def test_large_collection(collection):
     """Adding 100 books — all should be individually findable."""
     for i in range(100):
-        collection.add_book(f"Book {i}", f"Author {i}", 2000 + i)
+        collection.add_book(f"Book {i}", f"Author {i}", 1900 + i)
 
     assert len(collection.books) == 100
     for i in range(100):

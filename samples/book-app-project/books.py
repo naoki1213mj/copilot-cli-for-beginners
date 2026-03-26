@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, asdict
+from datetime import datetime
 
 
 DATA_FILE = "data.json"
@@ -148,13 +149,14 @@ class BookCollection:
         Args:
             title: The book's title. Must not be empty or whitespace-only.
             author: The author's name. Must not be empty or whitespace-only.
-            year: The publication year.
+            year: The publication year. Must be between 0 and current year + 1.
 
         Returns:
             The newly created ``Book`` instance.
 
         Raises:
-            BookValidationError: If ``title`` or ``author`` is empty.
+            BookValidationError: If ``title`` or ``author`` is empty,
+                or if ``year`` is negative or later than next year.
             StorageError: If the collection cannot be saved to disk.
 
         Example:
@@ -167,6 +169,10 @@ class BookCollection:
             raise BookValidationError("Title cannot be empty")
         if not author.strip():
             raise BookValidationError("Author cannot be empty")
+        if year < 0:
+            raise BookValidationError("Year cannot be negative")
+        if year > datetime.now().year + 1:
+            raise BookValidationError(f"Year cannot be later than {datetime.now().year + 1}")
         book = Book(title=title, author=author, year=year)
         self.books.append(book)
         self.save_books()
