@@ -97,6 +97,10 @@ def handle_find_title() -> None:
         print_error("Book not found.")
 
 
+def handle_list_unread() -> None:
+    print_books(collection.get_unread_books())
+
+
 def handle_search_year() -> None:
     print("\nSearch Books by Year Range\n")
 
@@ -128,6 +132,7 @@ def main() -> None:
 
     commands = {
         "list": handle_list,
+        "list-unread": handle_list_unread,
         "add": handle_add,
         "remove": handle_remove,
         "find": handle_find,

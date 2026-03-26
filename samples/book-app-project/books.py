@@ -323,6 +323,22 @@ class BookCollection:
             return []
         return [b for b in self.books if author.lower() in b.author.lower()]
 
+    def get_unread_books(self) -> list[Book]:
+        """Return all books that have not been read yet.
+
+        Returns:
+            A list of ``Book`` instances where ``read`` is ``False``.
+            Returns an empty list if all books are read or the
+            collection is empty.
+
+        Example:
+            >>> collection = BookCollection()
+            >>> collection.add_book("1984", "George Orwell", 1949)
+            >>> len(collection.get_unread_books())
+            1
+        """
+        return [b for b in self.books if not b.read]
+
     def list_by_year(self, start: int, end: int) -> list[Book]:
         """Filter books by publication year range (inclusive).
 

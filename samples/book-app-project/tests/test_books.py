@@ -295,6 +295,67 @@ def test_atomic_write_creates_no_leftover_tmp(collection):
     assert not os.path.exists(tmp_file)
 
 
+# --- get_unread_books ---
+
+
+def test_get_unread_books_empty_collection(collection):
+    assert collection.get_unread_books() == []
+
+
+def test_get_unread_books_all_unread(collection):
+    collection.add_book("1984", "George Orwell", 1949)
+    collection.add_book("Dune", "Frank Herbert", 1965)
+    results = collection.get_unread_books()
+    assert len(results) == 2
+
+
+def test_get_unread_books_mixed(collection):
+    collection.add_book("1984", "George Orwell", 1949)
+    collection.add_book("Dune", "Frank Herbert", 1965)
+    collection.add_book("The Hobbit", "J.R.R. Tolkien", 1937)
+    collection.mark_as_read("Dune")
+    results = collection.get_unread_books()
+    assert len(results) == 2
+    titles = {b.title for b in results}
+    assert titles == {"1984", "The Hobbit"}
+
+
+def test_get_unread_books_all_read(collection):
+    collection.add_book("1984", "George Orwell", 1949)
+    collection.add_book("Dune", "Frank Herbert", 1965)
+    collection.mark_as_read("1984")
+    collection.mark_as_read("Dune")
+    assert collection.get_unread_books() == []
+
+
+def test_get_unread_books_after_add(collection):
+    """A newly added book should appear in unread list."""
+    collection.add_book("1984", "George Orwell", 1949)
+    collection.mark_as_read("1984")
+    assert collection.get_unread_books() == []
+    collection.add_book("Dune", "Frank Herbert", 1965)
+    results = collection.get_unread_books()
+    assert len(results) == 1
+    assert results[0].title == "Dune"
+
+
+def test_get_unread_books_after_remove(collection):
+    """Removing an unread book should reduce the unread count."""
+    collection.add_book("1984", "George Orwell", 1949)
+    collection.add_book("Dune", "Frank Herbert", 1965)
+    collection.remove_book("1984")
+    results = collection.get_unread_books()
+    assert len(results) == 1
+    assert results[0].title == "Dune"
+
+
+def test_get_unread_books_single_book(collection):
+    collection.add_book("1984", "George Orwell", 1949)
+    results = collection.get_unread_books()
+    assert len(results) == 1
+    assert results[0].title == "1984"
+
+
 # --- list_by_year ---
 
 
