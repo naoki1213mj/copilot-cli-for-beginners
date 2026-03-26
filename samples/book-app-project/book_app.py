@@ -7,12 +7,12 @@ from utils import print_books
 collection = BookCollection()
 
 
-def handle_list():
+def handle_list() -> None:
     books = collection.list_books()
     print_books(books)
 
 
-def handle_add():
+def handle_add() -> None:
     print("\nAdd a New Book\n")
 
     title = input("Title: ").strip()
@@ -20,17 +20,22 @@ def handle_add():
     year_str = input("Year: ").strip()
 
     try:
-        year = int(year_str) if year_str else 0
+        if not year_str:
+            raise ValueError("Year cannot be empty")
+        year = int(year_str)
         collection.add_book(title, author, year)
         print("\nBook added successfully.\n")
     except ValueError as e:
         print(f"\nError: {e}\n")
 
 
-def handle_remove():
+def handle_remove() -> None:
     print("\nRemove a Book\n")
 
     title = input("Enter the title of the book to remove: ").strip()
+    if not title:
+        print("\nError: Title cannot be empty.\n")
+        return
     removed = collection.remove_book(title)
 
     if removed:
@@ -39,16 +44,19 @@ def handle_remove():
         print("\nBook not found.\n")
 
 
-def handle_find():
+def handle_find() -> None:
     print("\nFind Books by Author\n")
 
     author = input("Author name: ").strip()
+    if not author:
+        print("\nError: Author name cannot be empty.\n")
+        return
     books = collection.find_by_author(author)
 
     print_books(books)
 
 
-def handle_search_year():
+def handle_search_year() -> None:
     print("\nSearch Books by Year Range\n")
 
     start_str = input("Start year: ").strip()
@@ -63,7 +71,7 @@ def handle_search_year():
         print(f"\nError: {e}\n")
 
 
-def show_help():
+def show_help() -> None:
     print("""
 Book Collection Helper
 
@@ -77,7 +85,7 @@ Commands:
 """)
 
 
-def main():
+def main() -> None:
     if len(sys.argv) < 2:
         show_help()
         return
