@@ -327,3 +327,179 @@ def test_list_by_year_boundary_inclusive(collection):
     assert len(results) == 2
     titles = {b.title for b in results}
     assert titles == {"Start", "End"}
+
+
+# --- Partial Match Behavior ---
+
+
+def test_remove_partial_title_does_not_match(collection):
+    """Removing 'Dune' must NOT remove 'Dune Messiah' (exact match only)."""
+    collection.add_book("Dune", "Frank Herbert", 1965)
+    collection.add_book("Dune Messiah", "Frank Herbert", 1969)
+    collection.remove_book("Dune")
+    assert len(collection.books) == 1
+    assert collection.books[0].title == "Dune Messiah"
+
+
+def test_find_by_title_partial_does_not_match(collection):
+    """find_by_title('Dune') must NOT return 'Dune Messiah'."""
+    collection.add_book("Dune Messiah", "Frank Herbert", 1969)
+    assert collection.find_by_title("Dune") is None
+
+
+# --- File Permission / Storage Errors ---
+
+
+def test_save_raises_storage_error_on_open_failure(tmp_path):
+    """Patching builtins.open to raise OSError triggers StorageError on save."""
+    from unittest.mock import patch
+
+    temp_file = tmp_path / "data.json"
+    temp_file.write_text("[]")
+    c = BookCollection(data_file=str(temp_file))
+    c.books.append(Book(title="X", author="Y", year=2000))
+
+    with patch("builtins.open", side_effect=OSError("disk full")):
+        with pytest.raises(StorageError):
+            c.save_books()
+
+
+# --- Concurrent-like Access ---
+
+
+def test_concurrent_like_access(tmp_path):
+    """Two instances sharing a file: writes from one are visible after reload."""
+    shared_file = str(tmp_path / "shared.json")
+    with open(shared_file, "w") as f:
+        json.dump([], f)
+
+    c1 = BookCollection(data_file=shared_file)
+    c2 = BookCollection(data_file=shared_file)
+
+    c1.add_book("1984", "George Orwell", 1949)
+
+    # c2 doesn't see it yet (stale in-memory)
+    assert len(c2.books) == 0
+
+    # After reload, c2 sees the change
+    c2.load_books()
+    assert len(c2.books) == 1
+    assert c2.books[0].title == "1984"
+
+
+# --- Add then Find ---
+
+
+def test_add_book_then_find(collection):
+    """A just-added book is immediately findable by title."""
+    collection.add_book("Neuromancer", "William Gibson", 1984)
+    found = collection.find_by_title("Neuromancer")
+    assert found is not None
+    assert found.author == "William Gibson"
+    assert found.year == 1984
+
+
+# --- Remove All One by One ---
+
+
+def test_remove_all_books_one_by_one(collection):
+    """Adding 3 books and removing them all leaves an empty collection."""
+    collection.add_book("A", "Author A", 2001)
+    collection.add_book("B", "Author B", 2002)
+    collection.add_book("C", "Author C", 2003)
+    assert len(collection.books) == 3
+
+    collection.remove_book("A")
+    collection.remove_book("B")
+    collection.remove_book("C")
+    assert len(collection.books) == 0
+    assert collection.list_books() == []
+
+
+# --- Large Collection ---
+
+
+def test_large_collection(collection):
+    """Adding 100 books — all should be individually findable."""
+    for i in range(100):
+        collection.add_book(f"Book {i}", f"Author {i}", 2000 + i)
+
+    assert len(collection.books) == 100
+    for i in range(100):
+        found = collection.find_by_title(f"Book {i}")
+        assert found is not None
+        assert found.author == f"Author {i}"
+
+
+# --- find_by_author: extended scenarios ---
+
+
+def test_find_by_author_hyphenated_name(collection):
+    collection.add_book("Nausea", "Jean-Paul Sartre", 1938)
+    results = collection.find_by_author("Jean-Paul Sartre")
+    assert len(results) == 1
+    assert results[0].title == "Nausea"
+
+
+def test_find_by_author_hyphenated_case_insensitive(collection):
+    collection.add_book("Nausea", "Jean-Paul Sartre", 1938)
+    results = collection.find_by_author("jean-paul sartre")
+    assert len(results) == 1
+    assert results[0].title == "Nausea"
+
+
+def test_find_by_author_multiple_first_names(collection):
+    collection.add_book("One Hundred Years of Solitude", "Gabriel García Márquez", 1967)
+    results = collection.find_by_author("Gabriel García Márquez")
+    assert len(results) == 1
+    assert results[0].title == "One Hundred Years of Solitude"
+
+
+def test_find_by_author_accented_characters(collection):
+    collection.add_book("Love in the Time of Cholera", "García Márquez", 1985)
+    results = collection.find_by_author("García Márquez")
+    assert len(results) == 1
+    assert results[0].title == "Love in the Time of Cholera"
+
+
+def test_find_by_author_accented_case_sensitivity(collection):
+    collection.add_book("Love in the Time of Cholera", "García Márquez", 1985)
+    results = collection.find_by_author("garcía márquez")
+    assert len(results) == 1
+    assert results[0].title == "Love in the Time of Cholera"
+
+
+def test_find_by_author_empty_string(collection):
+    collection.add_book("1984", "George Orwell", 1949)
+    results = collection.find_by_author("")
+    assert results == []
+
+
+def test_find_by_author_apostrophe(collection):
+    collection.add_book("The Third Policeman", "O'Brien", 1967)
+    results = collection.find_by_author("O'Brien")
+    assert len(results) == 1
+    assert results[0].title == "The Third Policeman"
+
+
+def test_find_by_author_periods(collection):
+    collection.add_book("The Hobbit", "J.R.R. Tolkien", 1937)
+    results = collection.find_by_author("J.R.R. Tolkien")
+    assert len(results) == 1
+    assert results[0].title == "The Hobbit"
+
+
+def test_find_by_author_multiple_books_same_author(collection):
+    collection.add_book("Book A", "Prolific Writer", 2001)
+    collection.add_book("Book B", "Prolific Writer", 2002)
+    collection.add_book("Book C", "Prolific Writer", 2003)
+    results = collection.find_by_author("Prolific Writer")
+    assert len(results) == 3
+    titles = {b.title for b in results}
+    assert titles == {"Book A", "Book B", "Book C"}
+
+
+def test_find_by_author_whitespace_only(collection):
+    collection.add_book("1984", "George Orwell", 1949)
+    results = collection.find_by_author("   ")
+    assert results == []
