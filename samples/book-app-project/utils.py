@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+from books import Book
+
+
 def print_menu() -> None:
     """Display the interactive menu options.
 
@@ -79,7 +84,7 @@ def get_book_details() -> tuple[str, str, int]:
     return title, author, year
 
 
-def print_books(books: list) -> None:
+def print_books(books: list[Book]) -> None:
     """Display a list of books in a formatted output with read status."""
     if not books:
         print("No books in your collection.")
@@ -89,3 +94,20 @@ def print_books(books: list) -> None:
     for index, book in enumerate(books, start=1):
         status = "✅ Read" if book.read else "📖 Unread"
         print(f"{index}. {book.title} by {book.author} ({book.year}) - {status}")
+
+
+def show_help() -> None:
+    """Display available CLI commands."""
+    print("""
+Book Collection Helper
+
+Commands:
+  list         - Show all books
+  add          - Add a new book
+  remove       - Remove a book by title
+  find         - Find books by author
+  find-title   - Find a book by title
+  mark-read    - Mark a book as read
+  search-year  - Search books by year range
+  help         - Show this help message
+""")

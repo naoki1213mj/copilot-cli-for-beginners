@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from books import BookCollection
-from utils import get_book_details, print_books
+from utils import get_book_details, print_books, show_help
 
 
 # Global collection instance (initialized in main)
@@ -96,22 +96,6 @@ def handle_search_year() -> None:
         print_books(collection.list_by_year(start, end))
     except ValueError as e:
         print(f"\nError: {e}\n")
-
-
-def show_help() -> None:
-    print("""
-Book Collection Helper
-
-Commands:
-  list         - Show all books
-  add          - Add a new book
-  remove       - Remove a book by title
-  find         - Find books by author
-  find-title   - Find a book by title
-  mark-read    - Mark a book as read
-  search-year  - Search books by year range
-  help         - Show this help message
-""")
 
 
 def main() -> None:
