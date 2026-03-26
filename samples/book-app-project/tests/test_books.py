@@ -1,3 +1,4 @@
+import csv
 import json
 import os
 
@@ -354,6 +355,82 @@ def test_get_unread_books_single_book(collection):
     results = collection.get_unread_books()
     assert len(results) == 1
     assert results[0].title == "1984"
+
+
+# --- export_to_csv ---
+
+
+def test_export_to_csv_basic(collection, tmp_path):
+    collection.add_book("1984", "George Orwell", 1949)
+    collection.add_book("Dune", "Frank Herbert", 1965)
+    csv_file = str(tmp_path / "books.csv")
+    result = collection.export_to_csv(csv_file)
+    assert result == 2
+    assert os.path.exists(csv_file)
+
+
+def test_export_to_csv_content(collection, tmp_path):
+    collection.add_book("1984", "George Orwell", 1949)
+    csv_file = str(tmp_path / "books.csv")
+    collection.export_to_csv(csv_file)
+    with open(csv_file, encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        assert reader.fieldnames == ["title", "author", "year", "read"]
+        rows = list(reader)
+    assert len(rows) == 1
+    assert rows[0]["title"] == "1984"
+    assert rows[0]["author"] == "George Orwell"
+    assert rows[0]["year"] == "1949"
+    assert rows[0]["read"] == "False"
+
+
+def test_export_to_csv_empty_collection(collection, tmp_path):
+    csv_file = str(tmp_path / "books.csv")
+    result = collection.export_to_csv(csv_file)
+    assert result == 0
+    with open(csv_file, encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        rows = list(reader)
+    assert rows == []
+
+
+def test_export_to_csv_empty_filepath(collection):
+    with pytest.raises(BookValidationError, match="Filepath cannot be empty"):
+        collection.export_to_csv("")
+
+
+def test_export_to_csv_whitespace_filepath(collection):
+    with pytest.raises(BookValidationError, match="Filepath cannot be empty"):
+        collection.export_to_csv("   ")
+
+
+def test_export_to_csv_invalid_path(collection):
+    with pytest.raises(StorageError):
+        collection.export_to_csv("/nonexistent/dir/books.csv")
+
+
+def test_export_to_csv_overwrites_existing(collection, tmp_path):
+    csv_file = str(tmp_path / "books.csv")
+    with open(csv_file, "w") as f:
+        f.write("old content")
+    collection.add_book("Dune", "Frank Herbert", 1965)
+    collection.export_to_csv(csv_file)
+    with open(csv_file, encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        rows = list(reader)
+    assert len(rows) == 1
+    assert rows[0]["title"] == "Dune"
+
+
+def test_export_to_csv_read_status(collection, tmp_path):
+    collection.add_book("1984", "George Orwell", 1949)
+    collection.mark_as_read("1984")
+    csv_file = str(tmp_path / "books.csv")
+    collection.export_to_csv(csv_file)
+    with open(csv_file, encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        rows = list(reader)
+    assert rows[0]["read"] == "True"
 
 
 # --- list_by_year ---

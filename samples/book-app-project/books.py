@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 import logging
 import os
@@ -363,3 +364,37 @@ class BookCollection:
         if start > end:
             raise BookValidationError(f"Start year ({start}) cannot be greater than end year ({end})")
         return [b for b in self.books if start <= b.year <= end]
+
+    def export_to_csv(self, filepath: str = "books.csv") -> int:
+        """Export all books in the collection to a CSV file.
+
+        Writes every book as a row with columns ``title``, ``author``,
+        ``year``, and ``read``.
+
+        Args:
+            filepath: Destination CSV file path. Defaults to "books.csv".
+
+        Returns:
+            The number of books exported.
+
+        Raises:
+            BookValidationError: If ``filepath`` is empty or whitespace-only.
+            StorageError: If the file cannot be written.
+
+        Example:
+            >>> collection = BookCollection()
+            >>> collection.add_book("1984", "George Orwell", 1949)
+            >>> collection.export_to_csv("my_books.csv")
+            1
+        """
+        if not filepath.strip():
+            raise BookValidationError("Filepath cannot be empty")
+        try:
+            with open(filepath, "w", encoding="utf-8", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=["title", "author", "year", "read"])
+                writer.writeheader()
+                for book in self.books:
+                    writer.writerow(asdict(book))
+        except OSError as e:
+            raise StorageError(f"Could not write to {filepath}: {e}") from e
+        return len(self.books)

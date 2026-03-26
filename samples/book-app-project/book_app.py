@@ -120,6 +120,20 @@ def handle_search_year() -> None:
         print_error(str(e))
 
 
+def handle_export_csv() -> None:
+    filepath = input("Export file path (default: books.csv): ").strip()
+    if not filepath:
+        filepath = "books.csv"
+
+    try:
+        count = collection.export_to_csv(filepath)
+        print_success(f"Exported {count} book(s) to {filepath}")
+    except BookValidationError as e:
+        print_error(str(e))
+    except StorageError as e:
+        print_error(str(e))
+
+
 def main() -> None:
     global collection
     collection = BookCollection()
@@ -139,6 +153,7 @@ def main() -> None:
         "find-title": handle_find_title,
         "mark-read": handle_mark_read,
         "search-year": handle_search_year,
+        "export-csv": handle_export_csv,
         "help": show_help,
     }
 

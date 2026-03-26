@@ -46,6 +46,7 @@ Commands:
   find-title   - Find a book by title
   mark-read    - Mark a book as read
   search-year  - Search books by year range
+  export-csv   - Export all books to a CSV file
   help         - Show this help message
 """)
 

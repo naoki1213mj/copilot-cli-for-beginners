@@ -4,7 +4,7 @@ import sys
 from unittest.mock import patch
 
 import book_app
-from books import BookNotFoundError, StorageError
+from books import Book, BookNotFoundError, BookValidationError, StorageError
 
 
 @patch("book_app.collection")
@@ -151,3 +151,89 @@ def test_main_routes_to_help(capsys):
         book_app.main()
     output = capsys.readouterr().out
     assert "Commands:" in output
+
+
+# --- List Unread ---
+
+
+@patch("book_app.collection")
+def test_handle_list_unread(mock_collection, capsys):
+    mock_collection.get_unread_books.return_value = [
+        Book("1984", "George Orwell", 1949, False),
+    ]
+    book_app.handle_list_unread()
+    output = capsys.readouterr().out
+    assert "1984" in output
+    assert "Unread" in output
+
+
+@patch("book_app.collection")
+def test_handle_list_unread_empty(mock_collection, capsys):
+    mock_collection.get_unread_books.return_value = []
+    book_app.handle_list_unread()
+    output = capsys.readouterr().out
+    assert "No books" in output
+
+
+# --- Search Year ---
+
+
+@patch("book_app.collection")
+@patch("builtins.input", side_effect=["1940", "1970"])
+def test_handle_search_year(mock_input, mock_collection, capsys):
+    mock_collection.list_by_year.return_value = [
+        Book("1984", "George Orwell", 1949),
+    ]
+    book_app.handle_search_year()
+    mock_collection.list_by_year.assert_called_once_with(1940, 1970)
+    output = capsys.readouterr().out
+    assert "1984" in output
+
+
+@patch("book_app.collection")
+@patch("builtins.input", side_effect=["abc", "1970"])
+def test_handle_search_year_invalid_input(mock_input, mock_collection, capsys):
+    book_app.handle_search_year()
+    output = capsys.readouterr().out
+    assert "Error" in output
+
+
+@patch("book_app.collection")
+@patch("builtins.input", side_effect=["2000", "1900"])
+def test_handle_search_year_reversed_range(mock_input, mock_collection, capsys):
+    mock_collection.list_by_year.side_effect = BookValidationError("Start year (2000) cannot be greater than end year (1900)")
+    book_app.handle_search_year()
+    output = capsys.readouterr().out
+    assert "Error" in output
+
+
+# --- Export CSV ---
+
+
+@patch("book_app.collection")
+@patch("builtins.input", side_effect=["test.csv"])
+def test_handle_export_csv(mock_input, mock_collection, capsys):
+    mock_collection.export_to_csv.return_value = 3
+    book_app.handle_export_csv()
+    mock_collection.export_to_csv.assert_called_once_with("test.csv")
+    output = capsys.readouterr().out
+    assert "3 book(s)" in output
+
+
+@patch("book_app.collection")
+@patch("builtins.input", side_effect=[""])
+def test_handle_export_csv_default_path(mock_input, mock_collection, capsys):
+    mock_collection.export_to_csv.return_value = 2
+    book_app.handle_export_csv()
+    mock_collection.export_to_csv.assert_called_once_with("books.csv")
+    output = capsys.readouterr().out
+    assert "2 book(s)" in output
+
+
+@patch("book_app.collection")
+@patch("builtins.input", side_effect=["out.csv"])
+def test_handle_export_csv_storage_error(mock_input, mock_collection, capsys):
+    mock_collection.export_to_csv.side_effect = StorageError("disk full")
+    book_app.handle_export_csv()
+    output = capsys.readouterr().out
+    assert "Error" in output

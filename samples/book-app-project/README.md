@@ -11,6 +11,8 @@ Add, remove, search, and track books you've read.
 * Input validation on all user-facing commands
 * Search by author or year range
 * Mark books as read
+* Filter to show only unread books
+* Export your collection to CSV
 
 ---
 
@@ -29,12 +31,14 @@ Add, remove, search, and track books you've read.
 
 ```bash
 python book_app.py list
+python book_app.py list-unread
 python book_app.py add
 python book_app.py remove
 python book_app.py find
 python book_app.py find-title
 python book_app.py mark-read
 python book_app.py search-year
+python book_app.py export-csv
 python book_app.py help
 ```
 
