@@ -264,8 +264,11 @@ class BookCollection:
     def find_by_author(self, author: str) -> list[Book]:
         """Find all books by a given author (case-insensitive).
 
+        Supports partial author name matching. The search term will match
+        if found anywhere within the author's full name.
+
         Args:
-            author: The author name to search for.
+            author: The author name to search for (supports partial matches).
 
         Returns:
             A list of matching ``Book`` instances. Returns an empty
@@ -277,8 +280,10 @@ class BookCollection:
             >>> collection.add_book("Animal Farm", "George Orwell", 1945)
             >>> len(collection.find_by_author("george orwell"))
             2
+            >>> len(collection.find_by_author("Orwell"))
+            2
         """
-        return [b for b in self.books if b.author.lower() == author.lower()]
+        return [b for b in self.books if author.lower() in b.author.lower()]
 
     def list_by_year(self, start: int, end: int) -> list[Book]:
         """Filter books by publication year range (inclusive).
