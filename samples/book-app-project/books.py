@@ -212,13 +212,18 @@ class BookCollection:
     def mark_as_read(self, title: str) -> bool:
         """Mark a book as read by its title.
 
+        The search is case-insensitive and leading/trailing whitespace
+        in the provided title is stripped before matching.
+
         Args:
             title: The title of the book (case-insensitive).
+                Leading/trailing whitespace is stripped automatically.
 
         Returns:
             ``True`` if the book was found and marked as read.
 
         Raises:
+            BookValidationError: If ``title`` is empty or whitespace-only.
             BookNotFoundError: If no book with the given title exists.
             StorageError: If the collection cannot be saved.
 
@@ -228,9 +233,12 @@ class BookCollection:
             >>> collection.mark_as_read("1984")
             True
         """
-        book = self.find_by_title(title)
+        stripped = title.strip()
+        if not stripped:
+            raise BookValidationError("Title cannot be empty")
+        book = self.find_by_title(stripped)
         if not book:
-            raise BookNotFoundError(f"Book not found: '{title}'")
+            raise BookNotFoundError(f"Book not found: '{stripped}'")
         book.read = True
         self.save_books()
         return True
@@ -238,13 +246,18 @@ class BookCollection:
     def remove_book(self, title: str) -> bool:
         """Remove a book from the collection by its title.
 
+        The search is case-insensitive and leading/trailing whitespace
+        in the provided title is stripped before matching.
+
         Args:
             title: The title of the book to remove (case-insensitive).
+                Leading/trailing whitespace is stripped automatically.
 
         Returns:
             ``True`` if the book was found and removed.
 
         Raises:
+            BookValidationError: If ``title`` is empty or whitespace-only.
             BookNotFoundError: If no book with the given title exists.
             StorageError: If the collection cannot be saved.
 
@@ -253,10 +266,15 @@ class BookCollection:
             >>> collection.add_book("1984", "George Orwell", 1949)
             >>> collection.remove_book("1984")
             True
+            >>> collection.remove_book("  1984  ")  # whitespace is stripped
+            True
         """
-        book = self.find_by_title(title)
+        stripped = title.strip()
+        if not stripped:
+            raise BookValidationError("Title cannot be empty")
+        book = self.find_by_title(stripped)
         if not book:
-            raise BookNotFoundError(f"Book not found: '{title}'")
+            raise BookNotFoundError(f"Book not found: '{stripped}'")
         self.books.remove(book)
         self.save_books()
         return True
@@ -283,6 +301,8 @@ class BookCollection:
             >>> len(collection.find_by_author("Orwell"))
             2
         """
+        if not author.strip():
+            return []
         return [b for b in self.books if author.lower() in b.author.lower()]
 
     def list_by_year(self, start: int, end: int) -> list[Book]:
