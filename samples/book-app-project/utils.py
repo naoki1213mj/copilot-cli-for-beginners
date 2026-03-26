@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from books import Book
+from books import Book, BookValidationError
 
 
 # --- Display Functions (output only) ---
@@ -61,45 +61,46 @@ def print_success(message: str) -> None:
 # --- Validation Functions (pure logic, no I/O) ---
 
 
-def validate_non_empty(value: str, field_name: str) -> str | None:
+def validate_non_empty(value: str, field_name: str) -> None:
     """Check that a string is non-empty after stripping whitespace.
 
-    Returns:
-        An error message string if invalid, or None if valid.
+    Raises:
+        BookValidationError: If the value is empty or whitespace-only.
     """
     if not value.strip():
-        return f"{field_name} cannot be empty"
-    return None
+        raise BookValidationError(f"{field_name} cannot be empty")
 
 
-def validate_year_input(year_str: str) -> tuple[int, None] | tuple[None, str]:
+def validate_year_input(year_str: str) -> int:
     """Parse and validate a year string.
 
     Returns:
-        (year, None) on success, or (None, error_message) on failure.
+        The parsed year as an integer.
+
+    Raises:
+        BookValidationError: If the year string is invalid.
     """
     if not year_str.strip():
-        return None, "Year cannot be empty"
+        raise BookValidationError("Year cannot be empty")
     try:
         year = int(year_str)
     except ValueError:
-        return None, f"Invalid year: '{year_str}'. Please enter a number"
+        raise BookValidationError(f"Invalid year: '{year_str}'. Please enter a number")
     if year < 0:
-        return None, "Year cannot be negative"
-    return year, None
+        raise BookValidationError("Year cannot be negative")
+    return year
 
 
-def validate_menu_choice(choice: str) -> str | None:
+def validate_menu_choice(choice: str) -> None:
     """Validate a menu choice is a digit between 1-5.
 
-    Returns:
-        An error message string if invalid, or None if valid.
+    Raises:
+        BookValidationError: If the choice is invalid.
     """
     if not choice:
-        return "Input cannot be empty. Please enter a number between 1 and 5."
+        raise BookValidationError("Input cannot be empty. Please enter a number between 1 and 5.")
     if not choice.isdigit() or not 1 <= int(choice) <= 5:
-        return f"Invalid choice: '{choice}'. Please enter a number between 1 and 5."
-    return None
+        raise BookValidationError(f"Invalid choice: '{choice}'. Please enter a number between 1 and 5.")
 
 
 # --- Input Functions (combine validation + display) ---
@@ -115,9 +116,10 @@ def get_user_choice() -> str:
     """
     while True:
         choice = input("Choose an option (1-5): ").strip()
-        error = validate_menu_choice(choice)
-        if error:
-            print(error)
+        try:
+            validate_menu_choice(choice)
+        except BookValidationError as e:
+            print(str(e))
             continue
         return choice
 
@@ -132,25 +134,28 @@ def get_book_details() -> tuple[str, str, int]:
     """
     while True:
         title = input("Enter book title: ").strip()
-        error = validate_non_empty(title, "Title")
-        if error:
-            print(f"{error}. Please enter a title.")
+        try:
+            validate_non_empty(title, "Title")
+        except BookValidationError as e:
+            print(f"{e}. Please enter a title.")
             continue
         break
 
     while True:
         author = input("Enter author: ").strip()
-        error = validate_non_empty(author, "Author")
-        if error:
-            print(f"{error}. Please enter an author.")
+        try:
+            validate_non_empty(author, "Author")
+        except BookValidationError as e:
+            print(f"{e}. Please enter an author.")
             continue
         break
 
     while True:
         year_input = input("Enter publication year: ").strip()
-        year, error = validate_year_input(year_input)
-        if error:
-            print(f"{error}. Please enter a valid year.")
+        try:
+            year = validate_year_input(year_input)
+        except BookValidationError as e:
+            print(f"{e}. Please enter a valid year.")
             continue
         break
 

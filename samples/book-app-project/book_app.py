@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from books import BookCollection
+from books import BookCollection, BookNotFoundError, BookValidationError, StorageError
 from utils import (
     get_book_details, print_books, print_error, print_success,
     show_help, validate_non_empty,
@@ -23,7 +23,9 @@ def handle_add() -> None:
     try:
         collection.add_book(title, author, year)
         print_success("Book added successfully.")
-    except (ValueError, OSError) as e:
+    except BookValidationError as e:
+        print_error(str(e))
+    except StorageError as e:
         print_error(str(e))
 
 
@@ -31,27 +33,29 @@ def handle_remove() -> None:
     print("\nRemove a Book\n")
 
     title = input("Enter the title of the book to remove: ").strip()
-    error = validate_non_empty(title, "Title")
-    if error:
-        print_error(error)
+    try:
+        validate_non_empty(title, "Title")
+    except BookValidationError as e:
+        print_error(str(e))
         return
 
     try:
-        if collection.remove_book(title):
-            print_success("Book removed.")
-        else:
-            print_error("Book not found.")
-    except OSError as e:
-        print_error(f"Could not save changes: {e}")
+        collection.remove_book(title)
+        print_success("Book removed.")
+    except BookNotFoundError as e:
+        print_error(str(e))
+    except StorageError as e:
+        print_error(str(e))
 
 
 def handle_find() -> None:
     print("\nFind Books by Author\n")
 
     author = input("Author name: ").strip()
-    error = validate_non_empty(author, "Author name")
-    if error:
-        print_error(error)
+    try:
+        validate_non_empty(author, "Author name")
+    except BookValidationError as e:
+        print_error(str(e))
         return
 
     print_books(collection.find_by_author(author))
@@ -61,27 +65,29 @@ def handle_mark_read() -> None:
     print("\nMark a Book as Read\n")
 
     title = input("Enter the title: ").strip()
-    error = validate_non_empty(title, "Title")
-    if error:
-        print_error(error)
+    try:
+        validate_non_empty(title, "Title")
+    except BookValidationError as e:
+        print_error(str(e))
         return
 
     try:
-        if collection.mark_as_read(title):
-            print_success("Book marked as read.")
-        else:
-            print_error("Book not found.")
-    except OSError as e:
-        print_error(f"Could not save changes: {e}")
+        collection.mark_as_read(title)
+        print_success("Book marked as read.")
+    except BookNotFoundError as e:
+        print_error(str(e))
+    except StorageError as e:
+        print_error(str(e))
 
 
 def handle_find_title() -> None:
     print("\nFind a Book by Title\n")
 
     title = input("Enter the title: ").strip()
-    error = validate_non_empty(title, "Title")
-    if error:
-        print_error(error)
+    try:
+        validate_non_empty(title, "Title")
+    except BookValidationError as e:
+        print_error(str(e))
         return
 
     book = collection.find_by_title(title)
@@ -100,8 +106,13 @@ def handle_search_year() -> None:
     try:
         start = int(start_str)
         end = int(end_str)
-        print_books(collection.list_by_year(start, end))
     except ValueError as e:
+        print_error(str(e))
+        return
+
+    try:
+        print_books(collection.list_by_year(start, end))
+    except BookValidationError as e:
         print_error(str(e))
 
 

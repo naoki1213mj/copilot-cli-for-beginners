@@ -4,6 +4,7 @@ import sys
 from unittest.mock import patch
 
 import book_app
+from books import BookNotFoundError, StorageError
 
 
 @patch("book_app.collection")
@@ -42,7 +43,7 @@ def test_handle_remove_found(mock_input, mock_collection, capsys):
 @patch("book_app.collection")
 @patch("builtins.input", return_value="Nonexistent")
 def test_handle_remove_not_found(mock_input, mock_collection, capsys):
-    mock_collection.remove_book.return_value = False
+    mock_collection.remove_book.side_effect = BookNotFoundError("Book not found")
     book_app.handle_remove()
     output = capsys.readouterr().out
     assert "Book not found" in output
@@ -83,7 +84,7 @@ def test_handle_mark_read_found(mock_input, mock_collection, capsys):
 @patch("book_app.collection")
 @patch("builtins.input", return_value="Nonexistent")
 def test_handle_mark_read_not_found(mock_input, mock_collection, capsys):
-    mock_collection.mark_as_read.return_value = False
+    mock_collection.mark_as_read.side_effect = BookNotFoundError("Book not found")
     book_app.handle_mark_read()
     output = capsys.readouterr().out
     assert "Book not found" in output
@@ -120,6 +121,15 @@ def test_handle_find_title_empty(mock_input, capsys):
     book_app.handle_find_title()
     output = capsys.readouterr().out
     assert "Title cannot be empty" in output
+
+
+@patch("book_app.collection")
+@patch("builtins.input", return_value="The Hobbit")
+def test_handle_remove_storage_error(mock_input, mock_collection, capsys):
+    mock_collection.remove_book.side_effect = StorageError("Disk full")
+    book_app.handle_remove()
+    output = capsys.readouterr().out
+    assert "Disk full" in output
 
 
 def test_main_no_args(capsys):
